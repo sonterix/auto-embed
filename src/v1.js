@@ -1,9 +1,9 @@
 class MoneymadeAutoWidget {
-  container = ''
+  container
 
-  slug = 'horizontalDiscovery'
+  slug
 
-  dividerIndex = 2
+  dividerIndex
 
   /**
    * @param {string} selector Container selector
@@ -15,16 +15,15 @@ class MoneymadeAutoWidget {
       this.container = selector
     }
 
-    if (widget) {
-      this.slug = widget
-    }
-
-    if (divider) {
-      this.dividerIndex = divider
-    }
+    this.slug = widget || 'horizontalDiscovery'
+    this.dividerIndex = divider || 2
   }
 
   init() {
+    if (!this.container) {
+      throw new Error('Container is not found')
+    }
+
     const wrapper = document.querySelector(this.container)
 
     if (wrapper) {

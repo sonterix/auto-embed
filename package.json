@@ -1,7 +1,7 @@
 {
   "name": "auto-embed",
   "version": "1.0.0",
-  "description": "Used to connect external sites to the Moneymade widgets",
+  "description": "Used to add a widget in the center of a page",
   "author": "sonterix",
   "license": "ISC",
   "scripts": {

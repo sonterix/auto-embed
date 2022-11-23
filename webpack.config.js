@@ -6,7 +6,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
   mode: 'production',
-  entry: path.join(__dirname, 'src', 'v2.js'),
+  entry: path.join(__dirname, 'src', 'v1.js'),
   output: {
     filename: '[name].[fullhash].min.js',
     path: path.join(__dirname, 'build')

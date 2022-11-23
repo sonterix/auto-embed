@@ -49,12 +49,7 @@
   </style>
 
   <script defer src="https://markets.moneymade.io/embed/v2.min.js"></script>
-  <script defer src="../src/v1.js"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      window.mmautoinit('.container')
-    })
-  </script>
+  <script defer onload="window.mmautoinit('.container')" src="../src/v1.js"></script>
 </head>
 
 <body>

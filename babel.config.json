@@ -1,6 +1,7 @@
 {
   "comments": false,
   "presets": [
+    "@babel/typescript",
     [
       "@babel/preset-env",
       {

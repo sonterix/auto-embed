@@ -6,7 +6,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 module.exports = {
   mode: 'production',
-  entry: path.join(__dirname, 'src', 'v1.js'),
+  entry: path.join(__dirname, 'src', 'v1.ts'),
   output: {
     filename: '[name].[fullhash].min.js',
     path: path.join(__dirname, 'build')
@@ -14,11 +14,9 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.m?js$/,
-        exclude: /(node_modules|bower_components)/,
-        use: {
-          loader: 'babel-loader'
-        }
+        test: /\.ts$/,
+        exclude: /node_modules/,
+        loader: 'babel-loader'
       }
     ]
   },

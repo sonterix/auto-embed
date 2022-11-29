@@ -1,20 +1,25 @@
-class MoneymadeAutoWidget {
-  container
+import { DomainInfo, Props } from './types'
 
-  widget
+declare global {
+  interface Window {
+    mmautoinit: (props: Props) => void
+  }
+}
 
-  divider
+export class MoneymadeAutoWidget {
+  private container: string | null
 
-  /**
-   * @param {Object} props container, widget, divider
-   */
-  constructor(props) {
+  private widget: string
+
+  private divider: number
+
+  public constructor(props: Props) {
     this.container = props?.container || null
     this.widget = props?.widget || 'horizontalDiscovery'
     this.divider = props?.divider || 2
   }
 
-  init() {
+  private renderWidget() {
     if (!this.container) {
       throw new Error('Container is not found')
     }
@@ -58,12 +63,24 @@ class MoneymadeAutoWidget {
       throw new Error('Container is not found')
     }
   }
+
+  private fetchProfile(callback: (data: DomainInfo, error?: Error) => void) {
+    const profileName = window.location.host.replace('www.', '').replace(/[\W_]+/g, '')
+
+    const url = 'https://api.widgets-data.moneymade.io/api/v1'
+    const pathname = `/domains/${profileName}`
+
+    fetch(`${url}${pathname}`)
+      .then(response => response.json())
+      .then((data: DomainInfo) => {
+        callback(data)
+      })
+      .catch((error: Error) => {
+        callback(null, error)
+      })
+  }
 }
 
-/**
- * @param {Object} props container, widget, divider
- */
-window.mmautoinit = props => {
-  const autoWidget = new MoneymadeAutoWidget(props)
-  autoWidget.init()
+window.mmautoinit = (props: Props): void => {
+  new MoneymadeAutoWidget(props)
 }

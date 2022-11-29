@@ -5,13 +5,14 @@
   "author": "sonterix",
   "license": "ISC",
   "scripts": {
-    "compile": "babel src --out-dir compiled --out-file-extension .min.js",
+    "compile": "babel --presets @babel/preset-typescript src/v1.ts --out-file compiled/v1.min.js",
     "build": "webpack --config ./webpack.config.js"
   },
   "devDependencies": {
     "@babel/cli": "^7.17.6",
     "@babel/core": "^7.17.8",
     "@babel/preset-env": "^7.16.11",
+    "@babel/preset-typescript": "^7.18.6",
     "babel": "^6.23.0",
     "babel-cli": "^6.26.0",
     "babel-loader": "^8.2.4",
@@ -24,6 +25,8 @@
     "eslint-plugin-import": "^2.25.4",
     "html-webpack-plugin": "^5.5.0",
     "prettier": "^2.6.0",
+    "source-map-loader": "^4.0.1",
+    "typescript": "^4.9.3",
     "webpack": "^5.72.0",
     "webpack-cli": "^4.9.2"
   },

@@ -1,9 +1,3 @@
-export interface Props {
-  container: string
-  widget: string
-  divider: number
-}
-
 export interface DomainInfo {
   type: 'withAffiliateAd' | 'withMoneymadeAd' | 'withoutAd' | 'freemium'
   url: string
@@ -16,6 +10,9 @@ export interface Profile {
   colorSchema: ColorSchema | null
   platforms: Affiliate[] | null
   number: number
+  widget: string | null
+  container: string | null
+  divider: number | null
 }
 
 export interface ColorSchema {

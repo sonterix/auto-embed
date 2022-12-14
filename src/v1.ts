@@ -6,7 +6,7 @@ declare global {
   }
 }
 
-export class MoneymadeAutoWidget {
+class MoneymadeAutoWidget {
   public constructor() {
     this.fetchProfile().then(async ({ data, error }) => {
       if (error) {
@@ -15,7 +15,7 @@ export class MoneymadeAutoWidget {
       // Get permission to render a widget
       const permission = await this.fetchPermission(data?.container || null)
       // Render a widget
-      if (permission) {
+      if (permission.data) {
         this.renderWidget(data?.container || null, data?.widget || 'horizontalDiscovery', data?.divider || 2)
       }
     })
@@ -42,7 +42,7 @@ export class MoneymadeAutoWidget {
         error: profile === null ? new Error(`${profileName}${profileNumber} profile is not found`) : null
       }
     } catch (error) {
-      return { data: null, error: null }
+      return { data: null, error: error }
     }
   }
 
@@ -53,24 +53,30 @@ export class MoneymadeAutoWidget {
       return { data: false, error: new Error('container is not found') }
     }
 
-    const url = 'https://context-dot-moneyman-ssr.uc.r.appspot.com/v1'
-    const contextPathname = '/context'
+    const url = 'https://context-dot-moneyman-ssr.uc.r.appspot.com/api/v1'
     const hashesPathname = '/hashes'
+    const contextPathname = '/context'
     // Get only content text from container
     const containerContent = MoneymadeAutoWidget.stripHTML(containerElement?.innerHTML)
 
     try {
       // Get context hash
-      const responseContext = await fetch(`${url}${contextPathname}`, {
+      const responseContext = await fetch(`${url}${hashesPathname}`, {
         method: 'POST',
-        body: JSON.stringify({ hash: containerContent })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: containerContent })
       })
-      const dataContext = await responseContext.json()
-      // Get permission based on the hash
-      const responseHashes = await fetch(`${url}${hashesPathname}?hash=${dataContext}`)
-      const dataHashes = await responseHashes.json()
+      const dataContext: { hash: string } = await responseContext.json()
 
-      return { data: dataHashes, error: null }
+      // Get permission based on the hash
+      if (dataContext?.hash) {
+        const responseHashes = await fetch(`${url}${hashesPathname}${contextPathname}?hash=${dataContext.hash}`)
+        const dataHashes: { inContext: boolean } = await responseHashes.json()
+
+        return { data: dataHashes?.inContext || false, error: null }
+      }
+
+      return { data: false, error: new Error('hash not found') }
     } catch (error) {
       return { data: false, error }
     }
@@ -104,7 +110,7 @@ export class MoneymadeAutoWidget {
         div.style.display = 'block'
         div.setAttribute('data-width', '100%')
         div.setAttribute('data-height', '0')
-        div.setAttribute('data-embed-widget', this.widget)
+        div.setAttribute('data-embed-widget', widget)
         div.setAttribute('data-utm-medium', 'REPLACE_WITH_PAGE_SLUG')
         div.setAttribute('data-utm-source', 'REPLACE_WITH_SOURCE')
         div.setAttribute(
@@ -154,10 +160,15 @@ export class MoneymadeAutoWidget {
 
   private static stripHTML(html: string): string {
     let doc = new DOMParser().parseFromString(html, 'text/html')
-    return doc.body.textContent || ''
+    return doc.body.textContent?.replace(/\n/g, '') || ''
   }
 }
 
 window.mmautoinit = (): void => {
   new MoneymadeAutoWidget()
 }
+
+// Call init when the DOM is ready
+document.addEventListener('DOMContentLoaded', (): void => {
+  window.mmautoinit()
+})

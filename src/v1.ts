@@ -7,6 +7,8 @@ declare global {
 }
 
 class MoneymadeAutoWidget {
+  private profile: Profile
+
   public constructor() {
     this.fetchProfile().then(async ({ data, error }) => {
       if (error) {
@@ -16,9 +18,39 @@ class MoneymadeAutoWidget {
       const permission = await this.fetchPermission(data?.container || null)
       // Render a widget
       if (permission.data) {
-        this.renderWidget(data?.container || null, data?.widget || 'horizontalDiscovery', data?.divider || 2)
+        this.renderWidget(data?.container || null, data?.widget || null, data?.divider || null)
       }
     })
+  }
+
+  public trackURLChanges(): void {
+    if (this.profile) {
+      // Track page URL
+      let previousUrl = ''
+      // Create an observer instance linked to the callback function
+      const observer = new MutationObserver(async () => {
+        if (location.href !== previousUrl) {
+          previousUrl = location.href
+
+          // Get permission to render a widget
+          const permission = await this.fetchPermission(this.profile.container || null)
+          // Render a widget
+          if (permission.data) {
+            this.renderWidget(this.profile.container || null, this.profile.widget || null, this.profile.divider || null)
+          }
+        }
+      })
+
+      const config = {
+        attributes: false,
+        childList: true,
+        subtree: true,
+        characterData: false
+      }
+
+      // Start observing the document for configured mutations
+      observer.observe(document, config)
+    }
   }
 
   private async fetchProfile(): Promise<{ data: Profile | null; error: Error | null }> {
@@ -36,6 +68,10 @@ class MoneymadeAutoWidget {
       const data: DomainInfo = await response.json()
       // Get certain profile
       const profile = data?.profiles?.find(({ number }) => number === profileNumber) || null
+      // Save profile for the future
+      if (profile) {
+        this.profile = profile
+      }
 
       return {
         data: profile,
@@ -82,7 +118,7 @@ class MoneymadeAutoWidget {
     }
   }
 
-  private renderWidget(container: string | null, widget: string, divider: number): void {
+  private renderWidget(container: string | null, widget: string | null, divider: number | null): void {
     if (!container) {
       throw new Error('Container is not found')
     }
@@ -90,7 +126,7 @@ class MoneymadeAutoWidget {
     const wrapper = document.querySelector(container)
 
     if (wrapper) {
-      const position = wrapper.clientHeight / divider
+      const position = wrapper.clientHeight / (divider || 2)
       const wrapperElements = wrapper.children
 
       let heightCounter = 0
@@ -110,12 +146,12 @@ class MoneymadeAutoWidget {
         div.style.display = 'block'
         div.setAttribute('data-width', '100%')
         div.setAttribute('data-height', '0')
-        div.setAttribute('data-embed-widget', widget)
+        div.setAttribute('data-embed-widget', widget || 'horizontalDiscovery')
         div.setAttribute('data-utm-medium', 'REPLACE_WITH_PAGE_SLUG')
         div.setAttribute('data-utm-source', 'REPLACE_WITH_SOURCE')
         div.setAttribute(
           'data-utm-campaign',
-          widget
+          (widget || 'horizontalDiscovery')
             .split('-')
             .map((word, indx) => (indx !== 0 ? `${word.charAt(0).toUpperCase()}${word.slice(1)}` : word))
             .join('')
@@ -165,7 +201,9 @@ class MoneymadeAutoWidget {
 }
 
 window.mmautoinit = (): void => {
-  new MoneymadeAutoWidget()
+  const autoWidget = new MoneymadeAutoWidget()
+  // Track DOM changes
+  autoWidget.trackURLChanges()
 }
 
 // Call init when the DOM is ready

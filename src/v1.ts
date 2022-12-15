@@ -14,43 +14,17 @@ class MoneymadeAutoWidget {
       if (error) {
         throw new Error(error.message)
       }
+
       // Get permission to render a widget
       const permission = await this.fetchPermission(data?.container || null)
       // Render a widget
       if (permission.data) {
         this.renderWidget(data?.container || null, data?.widget || null, data?.divider || null)
       }
+
+      // Enable URL tracking
+      this.trackURLChanges()
     })
-  }
-
-  public trackURLChanges(): void {
-    if (this.profile) {
-      // Track page URL
-      let previousUrl = ''
-      // Create an observer instance linked to the callback function
-      const observer = new MutationObserver(async () => {
-        if (location.href !== previousUrl) {
-          previousUrl = location.href
-
-          // Get permission to render a widget
-          const permission = await this.fetchPermission(this.profile.container || null)
-          // Render a widget
-          if (permission.data) {
-            this.renderWidget(this.profile.container || null, this.profile.widget || null, this.profile.divider || null)
-          }
-        }
-      })
-
-      const config = {
-        attributes: false,
-        childList: true,
-        subtree: true,
-        characterData: false
-      }
-
-      // Start observing the document for configured mutations
-      observer.observe(document, config)
-    }
   }
 
   private async fetchProfile(): Promise<{ data: Profile | null; error: Error | null }> {
@@ -163,6 +137,34 @@ class MoneymadeAutoWidget {
     }
   }
 
+  private trackURLChanges(): void {
+    // Track page URL
+    let previousUrl = ''
+    // Create an observer instance linked to the callback function
+    const observer = new MutationObserver(async () => {
+      if (location.href !== previousUrl) {
+        previousUrl = location.href
+
+        // Get permission to render a widget
+        const permission = await this.fetchPermission(this.profile.container || null)
+        // Render a widget
+        if (permission.data) {
+          this.renderWidget(this.profile.container || null, this.profile.widget || null, this.profile.divider || null)
+        }
+      }
+    })
+
+    const config = {
+      attributes: false,
+      childList: true,
+      subtree: true,
+      characterData: false
+    }
+
+    // Start observing the document for configured mutations
+    observer.observe(document, config)
+  }
+
   private static parseSearch = (query: string): { [key: string]: string | string[] } => {
     if (!Object.keys(query).length) {
       return {}
@@ -201,9 +203,7 @@ class MoneymadeAutoWidget {
 }
 
 window.mmautoinit = (): void => {
-  const autoWidget = new MoneymadeAutoWidget()
-  // Track DOM changes
-  autoWidget.trackURLChanges()
+  new MoneymadeAutoWidget()
 }
 
 // Call init when the DOM is ready

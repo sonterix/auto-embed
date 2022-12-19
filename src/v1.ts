@@ -7,6 +7,7 @@ declare global {
 }
 
 class MoneymadeAutoWidget {
+  private name: string
   private profile: Profile
 
   public constructor() {
@@ -44,6 +45,7 @@ class MoneymadeAutoWidget {
       const profile = data?.profiles?.find(({ number }) => number === profileNumber) || null
       // Save profile for the future
       if (profile) {
+        this.name = data.name
         this.profile = profile
       }
 
@@ -98,8 +100,9 @@ class MoneymadeAutoWidget {
     }
 
     const wrapper = document.querySelector(container)
+    const existingWidget = wrapper?.querySelector('.money-made-auto-embed') || null
 
-    if (wrapper) {
+    if (wrapper && !existingWidget) {
       const position = wrapper.clientHeight / (divider || 2)
       const wrapperElements = wrapper.children
 
@@ -117,12 +120,13 @@ class MoneymadeAutoWidget {
       if (triggerElement) {
         const div = document.createElement('div')
         div.classList.add('money-made-embed')
+        div.classList.add('money-made-auto-embed')
         div.style.display = 'block'
         div.setAttribute('data-width', '100%')
         div.setAttribute('data-height', '0')
         div.setAttribute('data-embed-widget', widget || 'horizontalDiscovery')
         div.setAttribute('data-utm-medium', 'REPLACE_WITH_PAGE_SLUG')
-        div.setAttribute('data-utm-source', 'REPLACE_WITH_SOURCE')
+        div.setAttribute('data-utm-source', this.name || 'REPLACE_WITH_SOURCE')
         div.setAttribute(
           'data-utm-campaign',
           (widget || 'horizontalDiscovery')

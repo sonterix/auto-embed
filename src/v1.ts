@@ -163,24 +163,29 @@ class MoneymadeAutoWidget {
     // Track page URL
     let previousUrl = ''
     // Create an observer instance linked to the callback function
-    const observer = new MutationObserver(async () => {
-      if (location.href !== previousUrl) {
+    const observer = new MutationObserver(() => {
+      if (previousUrl === '') {
+        // Will fire on init
         previousUrl = location.href
-
-        // Get permission to render a widget
-        const hashes = await this.fentchHashes(this.profile.container || null)
-        // If permission to render a widget
-        if (hashes.data?.inContext) {
-          this.renderWidget(
-            this.profile.container || '',
-            this.profile.widget || undefined,
-            this.profile.divider || undefined
-          )
-        }
-        // Add summary if was received
-        if (hashes.data?.summary) {
-          this.renderSummary(hashes.data.summary)
-        }
+      } else if (location.href !== previousUrl) {
+        previousUrl = location.href
+        // Protector from lazyload page loading
+        setTimeout(async () => {
+          // Get permission to render a widget
+          const hashes = await this.fentchHashes(this.profile.container || null)
+          // If permission to render a widget
+          if (hashes.data?.inContext) {
+            this.renderWidget(
+              this.profile.container || '',
+              this.profile.widget || undefined,
+              this.profile.divider || undefined
+            )
+          }
+          // Add summary if was received
+          if (hashes.data?.summary) {
+            this.renderSummary(hashes.data.summary)
+          }
+        }, 50)
       }
     })
 

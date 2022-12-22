@@ -16,6 +16,7 @@ export interface Hashes {
 }
 
 export interface Context {
+  adPlug: string
   inContext: boolean
   summary: string[]
 }

@@ -193,6 +193,8 @@ class MoneymadeAutoWidget {
               this.profile.divider || undefined
             )
           }
+
+          this.renderSummary(context.data?.summary || [])
         }
       }
     })

@@ -1,4 +1,4 @@
-import { DomainInfo, Profile } from './types'
+import { Context, DomainInfo, FetchResponse, Hashes, Profile } from './types'
 
 declare global {
   interface Window {
@@ -17,10 +17,16 @@ class MoneymadeAutoWidget {
       }
 
       // Get permission to render a widget
-      const permission = await this.fetchPermission(data?.container || null)
+      const hashes = await this.fentchHashes(data?.container || null)
       // Render a widget
-      if (permission.data) {
-        this.renderWidget(data?.container || null, data?.widget || null, data?.divider || null)
+      if (hashes.data?.hash) {
+        const context = await this.fetchContext(hashes.data.hash)
+        // If permission to render a widget
+        if (context.data?.inContext) {
+          this.renderWidget(data?.container || '', data?.widget || undefined, data?.divider || undefined)
+        }
+
+        this.renderSummary(context.data?.summary || [])
       }
 
       // Enable URL tracking
@@ -28,18 +34,16 @@ class MoneymadeAutoWidget {
     })
   }
 
-  private async fetchProfile(): Promise<{ data: Profile | null; error: Error | null }> {
+  private async fetchProfile(): Promise<FetchResponse<Profile>> {
     // Get GET params from URL
     const params = MoneymadeAutoWidget.parseSearch(window.location.search)
     // Get profile data
     const profileName = window.location.host.replace('www.', '').replace(/[\W_]+/g, '')
     const profileNumber = params.profile ? Number((params.profile as string).match(/[0-9]+$/)) || 1 : 1
 
-    const url = 'https://api.widgets-data.moneymade.io/api/v1'
-    const pathname = `/domains/${profileName}`
-
     try {
-      const response = await fetch(`${url}${pathname}`)
+      const url = `https://api.widgets-data.moneymade.io/api/v1/domains/${profileName}`
+      const response = await fetch(url)
       const data: DomainInfo = await response.json()
       // Get certain profile
       const profile = data?.profiles?.find(({ number }) => number === profileNumber) || null
@@ -47,54 +51,58 @@ class MoneymadeAutoWidget {
       if (profile) {
         this.name = data.name
         this.profile = profile
+
+        return { data: profile, error: null }
       }
 
-      return {
-        data: profile,
-        error: profile === null ? new Error(`${profileName}${profileNumber} profile is not found`) : null
-      }
+      throw new Error(`${profileName}${profileNumber} profile is not found`)
     } catch (error) {
       return { data: null, error: error }
     }
   }
 
-  private async fetchPermission(container: string | null): Promise<{ data: boolean; error: Error | null }> {
+  private async fentchHashes(container: string | null): Promise<FetchResponse<Hashes>> {
     const containerElement = container ? document.querySelector(container) : null
 
     if (!containerElement) {
-      return { data: false, error: new Error('container is not found') }
+      return { data: null, error: new Error('container is not found') }
     }
 
-    const url = 'https://context-dot-moneyman-ssr.uc.r.appspot.com/api/v1'
-    const hashesPathname = '/hashes'
-    const contextPathname = '/context'
-    // Get only content text from container
+    // Get only content text from cotainer
     const containerContent = MoneymadeAutoWidget.stripHTML(containerElement?.innerHTML)
 
     try {
-      // Get context hash
-      const responseContext = await fetch(`${url}${hashesPathname}`, {
+      const url = 'https://context-dot-moneyman-ssr.uc.r.appspot.com/api/v1/hashes'
+      const responseContext = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: containerContent })
       })
-      const dataContext: { hash: string } = await responseContext.json()
+      const dataContext: Hashes = await responseContext.json()
 
-      // Get permission based on the hash
       if (dataContext?.hash) {
-        const responseHashes = await fetch(`${url}${hashesPathname}${contextPathname}?hash=${dataContext.hash}`)
-        const dataHashes: { inContext: boolean } = await responseHashes.json()
-
-        return { data: dataHashes?.inContext || false, error: null }
+        return { data: dataContext, error: null }
       }
 
-      return { data: false, error: new Error('hash not found') }
+      throw new Error('Nash not found')
     } catch (error) {
-      return { data: false, error }
+      return { data: null, error }
     }
   }
 
-  private renderWidget(container: string | null, widget: string | null, divider: number | null): void {
+  private async fetchContext(hash: string): Promise<FetchResponse<Context>> {
+    try {
+      const url = 'https://context-dot-moneyman-ssr.uc.r.appspot.com/api/v1/hashes/context'
+      const responseHashes = await fetch(`${url}?hash=${hash}`)
+      const dataHashes: Context = await responseHashes.json()
+
+      return { data: dataHashes, error: null }
+    } catch (error) {
+      return { data: null, error }
+    }
+  }
+
+  private renderWidget(container: string, widget: string = 'horizontalDiscovery', divider: number = 2): void {
     if (!container) {
       throw new Error('Container is not found')
     }
@@ -103,7 +111,7 @@ class MoneymadeAutoWidget {
     const existingWidget = wrapper?.querySelector('.money-made-auto-embed') || null
 
     if (wrapper && !existingWidget) {
-      const position = wrapper.clientHeight / (divider || 2)
+      const position = wrapper.clientHeight / divider
       const wrapperElements = wrapper.children
 
       let heightCounter = 0
@@ -124,12 +132,12 @@ class MoneymadeAutoWidget {
         div.style.display = 'block'
         div.setAttribute('data-width', '100%')
         div.setAttribute('data-height', '0')
-        div.setAttribute('data-embed-widget', widget || 'horizontalDiscovery')
+        div.setAttribute('data-embed-widget', widget)
         div.setAttribute('data-utm-medium', 'REPLACE_WITH_PAGE_SLUG')
         div.setAttribute('data-utm-source', this.name || 'REPLACE_WITH_SOURCE')
         div.setAttribute(
           'data-utm-campaign',
-          (widget || 'horizontalDiscovery')
+          widget
             .split('-')
             .map((word, indx) => (indx !== 0 ? `${word.charAt(0).toUpperCase()}${word.slice(1)}` : word))
             .join('')
@@ -141,6 +149,29 @@ class MoneymadeAutoWidget {
     }
   }
 
+  private renderSummary(summary: string[]): void {
+    const summaryContainer = document.querySelector('.mm-summary')
+
+    if (!summaryContainer) {
+      throw new Error('Summary container is not found')
+    }
+
+    // Create list of summary
+    const ul = document.createElement('ul')
+    const lis = summary.map(text => {
+      const li = document.createElement('li')
+      li.innerText = text
+      return li
+    })
+    // Add li elements to ul
+    lis.forEach(li => {
+      ul.appendChild(li)
+    })
+    // Clear container and add ul
+    summaryContainer.innerHTML = ''
+    summaryContainer.appendChild(ul)
+  }
+
   private trackURLChanges(): void {
     // Track page URL
     let previousUrl = ''
@@ -150,10 +181,18 @@ class MoneymadeAutoWidget {
         previousUrl = location.href
 
         // Get permission to render a widget
-        const permission = await this.fetchPermission(this.profile.container || null)
+        const hashes = await this.fentchHashes(this.profile.container || null)
         // Render a widget
-        if (permission.data) {
-          this.renderWidget(this.profile.container || null, this.profile.widget || null, this.profile.divider || null)
+        if (hashes.data?.hash) {
+          const context = await this.fetchContext(hashes.data.hash)
+          // If permission to render a widget
+          if (context.data?.inContext) {
+            this.renderWidget(
+              this.profile.container || '',
+              this.profile.widget || undefined,
+              this.profile.divider || undefined
+            )
+          }
         }
       }
     })
@@ -202,7 +241,7 @@ class MoneymadeAutoWidget {
 
   private static stripHTML(html: string): string {
     let doc = new DOMParser().parseFromString(html, 'text/html')
-    return doc.body.textContent?.replace(/\n/g, '') || ''
+    return doc.body.textContent || ''
   }
 }
 

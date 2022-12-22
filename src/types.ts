@@ -1,8 +1,23 @@
+export interface FetchResponse<T> {
+  data: T | null
+  error: Error | null
+}
+
 export interface DomainInfo {
   type: 'withAffiliateAd' | 'withMoneymadeAd' | 'withoutAd' | 'freemium'
   url: string
   name: string
   profiles: Profile[]
+}
+
+export interface Hashes {
+  hash: string
+  inContext: boolean
+}
+
+export interface Context {
+  inContext: boolean
+  summary: string[]
 }
 
 export interface Profile {

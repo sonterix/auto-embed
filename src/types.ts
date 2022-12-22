@@ -11,12 +11,8 @@ export interface DomainInfo {
 }
 
 export interface Hashes {
-  hash: string
-  inContext: boolean
-}
-
-export interface Context {
   adPlug: string
+  hash: string
   inContext: boolean
   summary: string[]
 }

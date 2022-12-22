@@ -1,4 +1,4 @@
-import { Context, DomainInfo, FetchResponse, Hashes, Profile } from './types'
+import { DomainInfo, FetchResponse, Hashes, Profile } from './types'
 
 declare global {
   interface Window {
@@ -18,17 +18,13 @@ class MoneymadeAutoWidget {
 
       // Get permission to render a widget
       const hashes = await this.fentchHashes(data?.container || null)
-      // Render a widget
-      if (hashes.data?.hash) {
-        const context = await this.fetchContext(hashes.data.hash)
-        // If permission to render a widget
-        if (context.data?.inContext) {
-          this.renderWidget(data?.container || '', data?.widget || undefined, data?.divider || undefined)
-        }
-        // Add summary if was received
-        if (context.data?.summary) {
-          this.renderSummary(context.data.summary)
-        }
+      // If permission to render a widget
+      if (hashes.data?.inContext) {
+        this.renderWidget(data?.container || '', data?.widget || undefined, data?.divider || undefined)
+      }
+      // Add summary if was received
+      if (hashes.data?.summary) {
+        this.renderSummary(hashes.data.summary)
       }
 
       // Enable URL tracking
@@ -86,19 +82,7 @@ class MoneymadeAutoWidget {
         return { data: dataContext, error: null }
       }
 
-      throw new Error('Nash not found')
-    } catch (error) {
-      return { data: null, error }
-    }
-  }
-
-  private async fetchContext(hash: string): Promise<FetchResponse<Context>> {
-    try {
-      const url = 'https://context-dot-moneyman-ssr.uc.r.appspot.com/api/v1/hashes/context'
-      const responseHashes = await fetch(`${url}?hash=${hash}`)
-      const dataHashes: Context = await responseHashes.json()
-
-      return { data: dataHashes, error: null }
+      throw new Error('Hash not found')
     } catch (error) {
       return { data: null, error }
     }
@@ -185,21 +169,17 @@ class MoneymadeAutoWidget {
 
         // Get permission to render a widget
         const hashes = await this.fentchHashes(this.profile.container || null)
-        // Render a widget
-        if (hashes.data?.hash) {
-          const context = await this.fetchContext(hashes.data.hash)
-          // If permission to render a widget
-          if (context.data?.inContext) {
-            this.renderWidget(
-              this.profile.container || '',
-              this.profile.widget || undefined,
-              this.profile.divider || undefined
-            )
-          }
-          // Add summary if was received
-          if (context.data?.summary) {
-            this.renderSummary(context.data.summary)
-          }
+        // If permission to render a widget
+        if (hashes.data?.inContext) {
+          this.renderWidget(
+            this.profile.container || '',
+            this.profile.widget || undefined,
+            this.profile.divider || undefined
+          )
+        }
+        // Add summary if was received
+        if (hashes.data?.summary) {
+          this.renderSummary(hashes.data.summary)
         }
       }
     })

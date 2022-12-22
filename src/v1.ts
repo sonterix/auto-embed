@@ -150,6 +150,16 @@ class MoneymadeAutoWidget {
   }
 
   private renderSummary(summary: string[]): void {
+    summary = [
+      'Daymond John became a millionaire at 29 by founding FUBU and has since accumulated a net worth of around $350 million.',
+      'John is known for his people-centric investment style and invests in startup companies, stocks, real estate, and cryptocurrency.',
+      'He prefers investing in industries he is familiar with and has a diverse portfolio, investing no more than 50% of his portfolio in stocks and 12% in crypto.'
+    ]
+
+    // if (!summary.length) {
+    //   throw new Error('Summary not found')
+    // }
+
     const summaryContainer = document.querySelector('.mm-summary')
 
     if (!summaryContainer) {

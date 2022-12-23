@@ -185,7 +185,7 @@ class MoneymadeAutoWidget {
           if (hashes.data?.summary) {
             this.renderSummary(hashes.data.summary)
           }
-        }, 50)
+        }, 200)
       }
     })
 

@@ -136,6 +136,7 @@ class MoneymadeAutoWidget {
   }
 
   private renderSummary(summary: string[], container: string): void {
+    const containerClasses = document.querySelector(container)?.classList.value || ''
     const summaryContainer = document.querySelector<HTMLElement>('.mm-summary')
 
     if (!summaryContainer) {
@@ -146,20 +147,25 @@ class MoneymadeAutoWidget {
     const ul = document.createElement('ul')
     const lis = summary.map(text => {
       const li = document.createElement('li')
-      const [textAnchor] = text.match(/\$[0-9]+ \s*(\S+)/g) || []
+      const [textAnchor] = text.match(/\$([0-9]+) ([A-Za-z]+)/g) || []
 
-      if (textAnchor && container) {
+      if (textAnchor && containerClasses) {
         // Generage ID for anchor
         const id = `mm-id-${Math.floor((1 + Math.random()) * 0x10000).toString(16)}`
         // Elements storage
         let node: Node | null = null
         const elements: Node[] = []
-        // Select elements by text in container
-        const xPath = `//*[@class='${container}']//*[contains(text(), '${textAnchor}')]`
-        const searchResult = document.evaluate(xPath, document, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null)
-        // Collect searched elements in variable
-        while ((node = searchResult.iterateNext())) {
-          elements.push(node)
+
+        try {
+          // Select elements by text in container
+          const xPath = `//*[contains(@class, '${containerClasses}')]//*[contains(text(), '${textAnchor}')]`
+          const searchResult = document.evaluate(xPath, document, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null)
+          // Collect searched elements in variable
+          while ((node = searchResult.iterateNext())) {
+            elements.push(node)
+          }
+        } catch (error) {
+          console.error(error)
         }
 
         if (elements[1]) {

@@ -24,7 +24,7 @@ class MoneymadeAutoWidget {
       }
       // Add summary if was received
       if (hashes.data?.summary) {
-        this.renderSummary(hashes.data.summary)
+        this.renderSummary(hashes.data.summary, data?.container || '')
       }
 
       // Enable URL tracking
@@ -135,7 +135,7 @@ class MoneymadeAutoWidget {
     }
   }
 
-  private renderSummary(summary: string[]): void {
+  private renderSummary(summary: string[], container: string): void {
     const summaryContainer = document.querySelector<HTMLElement>('.mm-summary')
 
     if (!summaryContainer) {
@@ -146,6 +146,35 @@ class MoneymadeAutoWidget {
     const ul = document.createElement('ul')
     const lis = summary.map(text => {
       const li = document.createElement('li')
+      const [textAnchor] = text.match(/\$[0-9]+ \s*(\S+)/g) || []
+
+      if (textAnchor && container) {
+        // Generage ID for anchor
+        const id = `mm-id-${Math.floor((1 + Math.random()) * 0x10000).toString(16)}`
+        // Elements storage
+        let node: Node | null = null
+        const elements: Node[] = []
+        // Select elements by text in container
+        const xPath = `//*[@class='${container}']//*[contains(text(), '${textAnchor}')]`
+        const searchResult = document.evaluate(xPath, document, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null)
+        // Collect searched elements in variable
+        while ((node = searchResult.iterateNext())) {
+          elements.push(node)
+        }
+
+        if (elements[1]) {
+          // Add ID to the element
+          ;(elements[1] as HTMLElement).id = id
+          const a = document.createElement('a')
+
+          a.innerText = text
+          a.href = `#${id}`
+
+          li.appendChild(a)
+          return li
+        }
+      }
+
       li.innerText = text
       return li
     })
@@ -183,7 +212,7 @@ class MoneymadeAutoWidget {
           }
           // Add summary if was received
           if (hashes.data?.summary) {
-            this.renderSummary(hashes.data.summary)
+            this.renderSummary(hashes.data.summary, this.profile.container || '')
           }
         }, 200)
       }

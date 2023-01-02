@@ -147,7 +147,7 @@ class MoneymadeAutoWidget {
     const ul = document.createElement('ul')
     const lis = summary.map(text => {
       const li = document.createElement('li')
-      // Detects $1.2 || $123 || 10% || $109,000 | $1.00 | 321,123 | 123.321
+      // Detects $1.2 | 12 | $123 || 10% | $109,000 | $1.00 | 321,123 | 123.321
       const [textAnchor] = text.match(/(\$|)[0-9]+((\%|\.|\,|)([A-Za-z]+|[0-9]+|\%)|)/g) || []
 
       if (textAnchor && containerClasses) {
@@ -169,7 +169,12 @@ class MoneymadeAutoWidget {
           console.error(error)
         }
 
+        // [1] cuz to skip the summary element
         if (elements[1]) {
+          // Add text widget to closest H tag
+          const closestHTage = MoneymadeAutoWidget.findInParent(elements[1].parentElement, 'h1, h2, h3, h4')
+          this.renderTextWidget(closestHTage)
+
           // Add ID to the element
           ;(elements[1] as HTMLElement).id = id
           const a = document.createElement('a')
@@ -195,16 +200,35 @@ class MoneymadeAutoWidget {
     summaryContainer.appendChild(ul)
   }
 
+  private renderTextWidget(elementAfter: HTMLElement | null): void {
+    if (elementAfter) {
+      const div = document.createElement('div')
+      div.style.display = 'block'
+      div.classList.add('money-made-embed')
+      div.setAttribute('data-name', 'Text Widget')
+      div.setAttribute('data-width', '100%')
+      div.setAttribute('data-height', '0')
+      div.setAttribute('data-embed-widget', 'text-widget')
+      div.setAttribute('data-utm-medium', 'REPLACE_WITH_PAGE_SLUG')
+      div.setAttribute('data-utm-source', this.name || 'REPLACE_WITH_SOURCE')
+      div.setAttribute('data-utm-campaign', 'textWidget')
+
+      elementAfter.after(div)
+    }
+  }
+
   private trackURLChanges(): void {
     // Track page URL
     let previousUrl = ''
     // Create an observer instance linked to the callback function
     const observer = new MutationObserver(() => {
+      const currentUrl = window.location.origin + window.location.pathname
+
       if (previousUrl === '') {
         // Will fire on init
-        previousUrl = location.href
-      } else if (location.href !== previousUrl) {
-        previousUrl = location.href
+        previousUrl = currentUrl
+      } else if (currentUrl !== previousUrl) {
+        previousUrl = currentUrl
         // Protector from lazyload page loading
         setTimeout(async () => {
           // Get permission to render a widget
@@ -270,6 +294,20 @@ class MoneymadeAutoWidget {
   private static stripHTML(html: string): string {
     let doc = new DOMParser().parseFromString(html, 'text/html')
     return doc.body.textContent || ''
+  }
+
+  private static findInParent(parent: HTMLElement | null, selector: string): HTMLElement | null {
+    if (parent) {
+      const elements = parent.querySelectorAll(selector)
+
+      if (elements.length) {
+        return elements[0] as HTMLElement
+      }
+
+      return MoneymadeAutoWidget.findInParent(parent.parentElement, selector)
+    }
+
+    return null
   }
 }
 

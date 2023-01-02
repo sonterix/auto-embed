@@ -147,7 +147,8 @@ class MoneymadeAutoWidget {
     const ul = document.createElement('ul')
     const lis = summary.map(text => {
       const li = document.createElement('li')
-      const [textAnchor] = text.match(/\$([0-9]+) ([A-Za-z]+)/g) || []
+      // Detects $1.2 || $123 || 10% || $109,000 | $1.00 | 321,123 | 123.321
+      const [textAnchor] = text.match(/(\$|)[0-9]+((\%|\.|\,|)([A-Za-z]+|[0-9]+|\%)|)/g) || []
 
       if (textAnchor && containerClasses) {
         // Generage ID for anchor

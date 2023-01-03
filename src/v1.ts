@@ -313,6 +313,6 @@ window.mmautoinit = (): void => {
 }
 
 // Call init when the DOM is ready
-document.addEventListener('DOMContentLoaded', (): void => {
+window.addEventListener('load', (): void => {
   window.mmautoinit()
 })

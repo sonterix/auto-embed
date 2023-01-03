@@ -143,6 +143,9 @@ class MoneymadeAutoWidget {
       throw new Error('Summary container is not found')
     }
 
+    // Remove native summary
+    summaryContainer.nextSibling?.remove()
+
     // Create list of summary
     const ul = document.createElement('ul')
     const lis = summary.map(text => {
@@ -172,8 +175,7 @@ class MoneymadeAutoWidget {
         // [1] cuz to skip the summary element
         if (elements[1]) {
           // Add text widget to closest H tag
-          const closestHTage = MoneymadeAutoWidget.findInParent(elements[1].parentElement, 'h1, h2, h3, h4')
-          this.renderTextWidget(closestHTage)
+          this.renderTextWidget(elements[1].parentElement)
 
           // Add ID to the element
           ;(elements[1] as HTMLElement).id = id
@@ -202,6 +204,14 @@ class MoneymadeAutoWidget {
 
   private renderTextWidget(elementAfter: HTMLElement | null): void {
     if (elementAfter) {
+      // Chenck and not render the widget in tables or lists
+      const updatedElementAfter =
+        elementAfter.closest('table') || elementAfter.closest('ul') || elementAfter.closest('ol')
+
+      if (updatedElementAfter) {
+        elementAfter = updatedElementAfter
+      }
+
       const div = document.createElement('div')
       div.style.display = 'block'
       div.classList.add('money-made-embed')
@@ -294,20 +304,6 @@ class MoneymadeAutoWidget {
   private static stripHTML(html: string): string {
     let doc = new DOMParser().parseFromString(html, 'text/html')
     return doc.body.textContent || ''
-  }
-
-  private static findInParent(parent: HTMLElement | null, selector: string): HTMLElement | null {
-    if (parent) {
-      const elements = parent.querySelectorAll(selector)
-
-      if (elements.length) {
-        return elements[0] as HTMLElement
-      }
-
-      return MoneymadeAutoWidget.findInParent(parent.parentElement, selector)
-    }
-
-    return null
   }
 }
 

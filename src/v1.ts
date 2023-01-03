@@ -172,13 +172,12 @@ class MoneymadeAutoWidget {
           console.error(error)
         }
 
-        // [1] cuz to skip the summary element
-        if (elements[1]) {
+        if (elements[0]) {
           // Add text widget to closest H tag
-          this.renderTextWidget(elements[1].parentElement)
+          this.renderTextWidget(elements[0].parentElement)
 
           // Add ID to the element
-          ;(elements[1] as HTMLElement).id = id
+          ;(elements[0] as HTMLElement).id = id
           const a = document.createElement('a')
 
           a.innerText = text

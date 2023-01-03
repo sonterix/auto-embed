@@ -214,6 +214,7 @@ class MoneymadeAutoWidget {
 
       const div = document.createElement('div')
       div.style.display = 'block'
+      div.style.margin = '20px auto'
       div.classList.add('money-made-embed')
       div.setAttribute('data-name', 'Text Widget')
       div.setAttribute('data-width', '100%')

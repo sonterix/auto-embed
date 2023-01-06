@@ -15,6 +15,8 @@ export interface Hashes {
   hash: string
   inContext: boolean
   summary: string[]
+  anchors: string[]
+  error?: string
 }
 
 export interface Profile {

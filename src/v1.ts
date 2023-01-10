@@ -249,7 +249,7 @@ class MoneymadeAutoWidget {
 
       // Check if the parent already contains the widget and if parent more than 300 px width
       const parentWithWidget = elementAfter.parentElement?.querySelector('[data-widget="text-widget"]')
-      const parentWidth = elementAfter.parentElement?.offsetWidth || 0
+      const parentWidth = elementAfter.offsetWidth || 0
 
       if (!parentWithWidget && parentWidth >= 300) {
         const div = document.createElement('div')

@@ -1,15 +1,14 @@
 import { DomainInfo, FetchResponse, Hashes, Profile } from './types'
 
-// запрос на api/v1/hashes/context/?hash= с использованием функции
-// если нет то запрос обызчный
-// http://www.webtoolkit.info/javascript-md5.html#.Y7h4edJBycx
+/* Done:
+  - /hashes/context query
+  - check for existing widget
+  - check for parent width
+  - canonical and og:url
+**/
 
 // anchors: [] - новые якоря для саммари
-
-// не вставлять рекламу в один и тот же парент
-
-// <link rel="canonical" href="https://moneymade.io/learn/article/reddit-nfts"/>
-// <meta property="og:url" content="https://moneymade.io/learn/article/reddit-nfts"/>
+// Iframe widget based on new API
 
 declare global {
   interface Window {
@@ -92,18 +91,25 @@ class MoneymadeAutoWidget {
         return { data: dataContext, error: null }
       }
 
-      throw new Error('Hash not found')
+      throw new Error('Content is not hashed')
     } catch (error) {
       console.error(error)
     }
 
     // Generate new hashe
     try {
+      // Get page url form head tags for API request
+      const pageUrlElement =
+        document.querySelector('[rel="canonical"]') || document.querySelector('[property="og:url"]')
+      const pageUrl = pageUrlElement
+        ? pageUrlElement.getAttribute('href') || pageUrlElement.getAttribute('content')
+        : null
+
       const url = 'https://context-dot-moneyman-ssr.uc.r.appspot.com/api/v1/hashes'
       const responseContext = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: containerContent })
+        body: JSON.stringify({ text: containerContent, url: pageUrl })
       })
       const dataContext: Hashes = await responseContext.json()
 
@@ -165,6 +171,7 @@ class MoneymadeAutoWidget {
   }
 
   private renderSummary(summary: string[], container: string): void {
+    // Classes need for xpath search
     const containerClasses = document.querySelector(container)?.classList.value || ''
     const summaryContainer = document.querySelector<HTMLElement>('.mm-summary')
 
@@ -240,10 +247,11 @@ class MoneymadeAutoWidget {
         elementAfter = updatedElementAfter
       }
 
-      // Check if the parent already contains the widget
-      const parent = elementAfter.parentElement?.querySelector('[data-widget="text-widget"]')
+      // Check if the parent already contains the widget and if parent more than 300 px width
+      const parentWithWidget = elementAfter.parentElement?.querySelector('[data-widget="text-widget"]')
+      const parentWidth = elementAfter.parentElement?.offsetWidth || 0
 
-      if (!parent) {
+      if (!parentWithWidget && parentWidth >= 300) {
         const div = document.createElement('div')
         div.style.display = 'block'
         div.style.margin = '20px auto'
